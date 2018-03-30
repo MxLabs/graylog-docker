@@ -1,2 +1,4 @@
 # graylog-docker
-Graylog
+
+
+PS: Change root pwd
