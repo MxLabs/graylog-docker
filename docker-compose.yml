@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  gray-mongo: 
+    image: mongo:3.6
+    hostname: gray-mongo
+    restart: always
+  gray-elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.6.8
+    hostname: gray-elastic
+    environment:
+      - http.host=0.0.0.0
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+    restart: always
+  gray-log:
+    image: graylog/graylog:2.4.3-1
+    hostname: gray-log
+    environment:
+      - GRAYLOG_PASSWORD_SECRET="!Mx*ldEgN0wnhM"
+      - GRAYLOG_ROOT_PASSWORD_SHA2=76355c44111abc1d1c45c9a8a1babdc6df69cf68b9942fe8d9b50ebec0027707
+      - GRAYLOG_WEB_ENDPOINT_URI=http://127.0.0.1:9000/api
+      - GRAYLOG_MONGODB_URI=mongodb://gray-mongo:27017/graylog
+      - GRAYLOG_ELASTICSEARCH_HOSTS=http://gray-elastic:9200
+    ports:
+      - "9000:9000"
+      - "514:514"
+      - "514:514/udp"
+      - "12201:12201"
+      - "12201:12201/udp"
+    links:
+      - gray-mongo
+      - gray-elastic
+restart: always
