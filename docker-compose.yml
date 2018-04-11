@@ -33,4 +33,4 @@ services:
     links:
       - gray-mongo
       - gray-elastic
-restart: always
+    restart: always
