@@ -1,36 +1,48 @@
 version: '3'
 
 services:
-  gray-mongo: 
-    image: mongo:3.6
-    hostname: gray-mongo
+  mongo: 
+    image: mongo:4.0-xenial
+    networks:
+      - graylog
     restart: always
-  gray-elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:5.6.8
-    hostname: gray-elastic
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.2
     environment:
       - http.host=0.0.0.0
-      - xpack.security.enabled=false
+      - transport.host=localhost
+      - network.host=0.0.0.0
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      - discovery.type=single-node
-      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    networks:
+      - graylog
     restart: always
-  gray-log:
-    image: graylog/graylog:2.4.4-1
+  graylog:
+    image: graylog/graylog:3.1
     hostname: gray-log
     environment:
       - GRAYLOG_PASSWORD_SECRET="!Mx*ldEgN0wnhM"
       - GRAYLOG_ROOT_PASSWORD_SHA2=76355c44111abc1d1c45c9a8a1babdc6df69cf68b9942fe8d9b50ebec0027707
-      - GRAYLOG_WEB_ENDPOINT_URI=http://127.0.0.1:9000/api
-      - GRAYLOG_MONGODB_URI=mongodb://gray-mongo:27017/graylog
-      - GRAYLOG_ELASTICSEARCH_HOSTS=http://gray-elastic:9200
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9000/
+    depends_on:
+      - mongo
+      - elasticsearch
     ports:
-      - "9000:9000"
-      - "514:514"
-      - "514:514/udp"
-      - "12201:12201"
-      - "12201:12201/udp"
-    links:
-      - gray-mongo
-      - gray-elastic
+      - 9000:9000
+      - 1514:1514
+      - 1514:1514/udp
+      - 12201:12201
+      - 12201:12201/udp
+    networks:
+      - graylog
     restart: always
+networks:
+  graylog:
+    driver: bridge
